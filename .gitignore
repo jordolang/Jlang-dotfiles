@@ -1,0 +1,54 @@
+# Machine-specific settings
+.zsh/local.zsh
+
+# ZSH completion cache
+.zsh/.zcompcache/
+
+# Micro editor buffers and backups
+.config/micro/buffers/
+.config/micro/backups/
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Thumbnails
+._*
+
+# Files that might appear in the root of a volume
+.DocumentRevisions-V100
+.fseventsd
+.Spotlight-V100
+.TemporaryItems
+.Trashes
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
+
+# Directories potentially created on remote AFP share
+.AppleDB
+.AppleDesktop
+Network Trash Folder
+Temporary Items
+.apdisk
+
+# Vim
+*.swp
+*.swo
+*~
+
+# Temporary files
+*.tmp
+*.temp
+*.log
+
+# SSH keys (just in case)
+*.pem
+*.key
+id_rsa*
+id_ed25519*
+
+# API keys and secrets
+.env
+.env.local
+*.secret

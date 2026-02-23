@@ -1,0 +1,17 @@
+[user]
+	name = Jordan Lang
+	email = jordolang@gmail.com
+[filter "lfs"]
+	required = true
+	clean = git-lfs clean -- %f
+	smudge = git-lfs smudge -- %f
+	process = git-lfs filter-process
+[coderabbit]
+	machineId = cli/499e85ae573b4cf49d92aa62ec93034d
+[credential]
+	helper = 
+	helper = /usr/local/share/gcm-core/git-credential-manager
+[credential "https://dev.azure.com"]
+	useHttpPath = true
+[safe]
+	directory = /Users/jordanlang/Repos/portainer-templates
