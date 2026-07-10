@@ -1,16 +1,19 @@
-# Jordan Lang's Brewfile
-# Run: brew bundle --file ~/.dotfiles/Brewfile
+# ╔══════════════════════════════════════════════════════════════════╗
+# ║  Jordan Lang — dev-core Brewfile                                   ║
+# ║                                                                    ║
+# ║  Curated from a live `brew bundle dump` snapshot, pruned to the    ║
+# ║  development environment (languages, editors, CLI tools, DBs,      ║
+# ║  containers, AI/dev tooling, fonts). Hobby / experimental / beta   ║
+# ║  packages were intentionally left out — see Brewfile.full for the  ║
+# ║  complete machine mirror if you ever want it.                      ║
+# ║                                                                    ║
+# ║  Install everything with:  brew bundle --file=Brewfile             ║
+# ╚══════════════════════════════════════════════════════════════════╝
 
-# ═══════════════════════════════════════════════════════════
-# TAPS
-# ═══════════════════════════════════════════════════════════
-tap "homebrew/bundle"
-tap "homebrew/cask-fonts"
-tap "mongodb/brew"
+# ── Taps ────────────────────────────────────────────────────────────
+tap "supabase/tap"
 
-# ═══════════════════════════════════════════════════════════
-# SHELL & TERMINAL
-# ═══════════════════════════════════════════════════════════
+# ── Shell & terminal ────────────────────────────────────────────────
 brew "zsh"
 brew "zsh-autosuggestions"
 brew "zsh-syntax-highlighting"
@@ -20,44 +23,49 @@ brew "bash"
 brew "bash-completion@2"
 brew "tmux"
 
-# ═══════════════════════════════════════════════════════════
-# MODERN CLI REPLACEMENTS
-# ═══════════════════════════════════════════════════════════
-brew "eza"                 # Better ls
-brew "bat"                 # Better cat
-brew "fd"                  # Better find
-brew "ripgrep"             # Better grep
-brew "fzf"                 # Fuzzy finder
-brew "zoxide"              # Smart cd
-brew "git-delta"           # Better git diff
-brew "thefuck"             # Command correction
-
-# ═══════════════════════════════════════════════════════════
-# FILE MANAGERS & VIEWERS
-# ═══════════════════════════════════════════════════════════
-brew "yazi"
-brew "tree"
+# ── Modern CLI replacements & utilities ─────────────────────────────
+brew "eza"                 # better ls
+brew "bat"                 # better cat
+brew "fd"                  # better find
+brew "ripgrep"             # better grep (rg)
+brew "the_silver_searcher" # ag
+brew "fzf"                 # fuzzy finder
+brew "zoxide"              # smart cd
+brew "git-delta"           # better git diff pager
+brew "yazi"                # terminal file manager
 brew "htop"
 brew "fastfetch"
+brew "tree"
+brew "jq"                  # JSON processor
+brew "yq"                  # YAML/JSON/XML processor
+brew "tldr"                # simplified man pages
+brew "cheat"               # command cheat sheets
+brew "just"                # command runner
+brew "trash"
+brew "thefuck"             # command auto-correction
+brew "terminal-notifier"
+brew "multitail"
+brew "pandoc"              # document conversion
 
-# ═══════════════════════════════════════════════════════════
-# TEXT EDITORS
-# ═══════════════════════════════════════════════════════════
+# ── Downloaders / transfer ──────────────────────────────────────────
+brew "wget"
+brew "aria2"
+brew "rclone"
+brew "rsync"
+
+# ── Editors ─────────────────────────────────────────────────────────
 brew "micro"
 brew "neovim"
 
-# ═══════════════════════════════════════════════════════════
-# VERSION CONTROL
-# ═══════════════════════════════════════════════════════════
+# ── Version control ─────────────────────────────────────────────────
 brew "git"
 brew "git-lfs"
-brew "git-delta"
 brew "git-flow"
 brew "gh"                  # GitHub CLI
+brew "gitleaks"            # secret scanning
 
-# ═══════════════════════════════════════════════════════════
-# LANGUAGES & COMPILERS
-# ═══════════════════════════════════════════════════════════
+# ── Languages & compilers ───────────────────────────────────────────
+brew "python@3.11"
 brew "python@3.13"
 brew "python@3.14"
 brew "node"
@@ -65,143 +73,119 @@ brew "go"
 brew "rust"
 brew "gcc"
 
-# ═══════════════════════════════════════════════════════════
-# VERSION MANAGERS
-# ═══════════════════════════════════════════════════════════
-brew "nvm"                 # Node Version Manager
-brew "pyenv"               # Python Version Manager
-brew "rbenv"               # Ruby Version Manager
-brew "ruby-build"
+# ── Version managers ────────────────────────────────────────────────
+brew "nvm"                 # Node
+brew "pyenv"               # Python
+brew "rbenv"               # Ruby
+brew "mise"                # polyglot (asdf clone)
 
-# ═══════════════════════════════════════════════════════════
-# PACKAGE MANAGERS
-# ═══════════════════════════════════════════════════════════
+# ── Package managers ────────────────────────────────────────────────
+brew "pnpm"
 brew "composer"            # PHP
 brew "cocoapods"           # iOS
-brew "pnpm"
+brew "pipx"                # isolated Python apps
+brew "uv"                  # fast Python installer/resolver
 
-# ═══════════════════════════════════════════════════════════
-# BUILD TOOLS
-# ═══════════════════════════════════════════════════════════
+# ── Build tooling ───────────────────────────────────────────────────
 brew "cmake"
 brew "make"
 brew "automake"
-brew "autoconf"
-brew "libtool"
-brew "pkg-config"
+brew "pkgconf"
 
-# ═══════════════════════════════════════════════════════════
-# CONTAINER & ORCHESTRATION
-# ═══════════════════════════════════════════════════════════
+# ── Containers & infrastructure ─────────────────────────────────────
 brew "docker"
+brew "docker-buildx"
 brew "docker-compose"
-brew "docker-completion"
+brew "colima"              # container runtime without Docker Desktop
 brew "lazydocker"
-brew "kubernetes-cli"
+brew "kubernetes-cli"      # kubectl
 brew "helm@3"
 brew "terraform"
 brew "ansible"
+brew "qemu"
 
-# ═══════════════════════════════════════════════════════════
-# DATABASES
-# ═══════════════════════════════════════════════════════════
+# ── Databases ───────────────────────────────────────────────────────
 brew "postgresql@14"
 brew "mysql"
-brew "mariadb"
 brew "redis"
-brew "mongodb-community"
 brew "mongodb-atlas-cli"
-brew "mongodb-database-tools"
-brew "mongosh"
-brew "sqlite"
+brew "supabase/tap/supabase"
 
-# ═══════════════════════════════════════════════════════════
-# CLOUD & DEVOPS
-# ═══════════════════════════════════════════════════════════
-brew "wget"
-brew "curl"
-brew "rsync"
-brew "aria2"
-brew "rclone"
+# ── AI / dev tooling ────────────────────────────────────────────────
+brew "ollama", link: false # local LLM runner
+brew "openai-whisper"      # speech-to-text
+brew "gemini-cli"          # Google Gemini CLI
+brew "opencode"            # terminal AI coding agent
+brew "semgrep"             # static analysis
+brew "hf"                  # Hugging Face hub client
 
-# ═══════════════════════════════════════════════════════════
-# DEVELOPMENT UTILITIES
-# ═══════════════════════════════════════════════════════════
-brew "jq"                  # JSON processor
-brew "yq"                  # YAML processor
-brew "tldr"                # Simplified man pages
-brew "terminal-notifier"
-
-# ═══════════════════════════════════════════════════════════
-# MEDIA & IMAGE PROCESSING
-# ═══════════════════════════════════════════════════════════
-brew "ffmpeg"
+# ── Media / document processing ─────────────────────────────────────
 brew "imagemagick"
+brew "ffmpeg"
+brew "ghostscript"
+brew "poppler"
+brew "tesseract"           # OCR
 
-# ═══════════════════════════════════════════════════════════
-# COMPRESSION
-# ═══════════════════════════════════════════════════════════
-brew "unzip"
-brew "xz"
-brew "zstd"
+# ── Networking ──────────────────────────────────────────────────────
+brew "nmap"
+brew "netcat"
+brew "telnet"
 
-# ═══════════════════════════════════════════════════════════
-# MISC DEV TOOLS
-# ═══════════════════════════════════════════════════════════
-brew "ollama"
-brew "multitail"
-brew "lolcat"
-brew "figlet"
+# ── Security / misc ─────────────────────────────────────────────────
+brew "pinentry-mac"        # GPG pinentry
+brew "sshpass"
+brew "shadcn"              # component CLI
 brew "mas"                 # Mac App Store CLI
-brew "yt-dlp"
-brew "try-rs"
-brew "deno"
-brew "bun"
-brew "uv"
-brew "pipx"
+brew "unzip"
 brew "yamllint"
-brew "tidy-html5"
-brew "tesseract"
+brew "try-rs"              # scratch workspace manager
 
-# ═══════════════════════════════════════════════════════════
-# CASKS (APPLICATIONS)
-# ═══════════════════════════════════════════════════════════
+# ════════════════════════════════════════════════════════════════════
+# CASKS (GUI applications)
+# ════════════════════════════════════════════════════════════════════
 
-# Browsers
+# ── Browsers ────────────────────────────────────────────────────────
 cask "google-chrome"
 cask "firefox"
 cask "arc"
 
-# Development
+# ── Editors & terminals ─────────────────────────────────────────────
 cask "cursor"
 cask "visual-studio-code"
+cask "zed"
 cask "iterm2"
 cask "warp"
 cask "alacritty"
+cask "wave"
+
+# ── AI coding ───────────────────────────────────────────────────────
+cask "codex"               # OpenAI terminal coding agent
+
+# ── Dev infrastructure ──────────────────────────────────────────────
 cask "docker-desktop"
 cask "orbstack"
-
-# Design
-cask "figma"
-
-# Communication
-cask "whatsapp"
-cask "telegram"
-cask "messenger"
-
-# Productivity
-cask "obsidian"
-cask "rectangle"
-cask "maccy"
-
-# Database tools
 cask "tableplus"
+cask "postman"
+cask "gcloud-cli"
+cask "android-platform-tools"
 
-# Utilities
+# ── Design & productivity ───────────────────────────────────────────
+cask "figma"
+cask "obsidian"
+cask "notion"
+cask "rectangle"           # window management
+cask "maccy"               # clipboard manager
+cask "slack"
+
+# ── Utilities ───────────────────────────────────────────────────────
 cask "keka"
+cask "the-unarchiver"
+cask "appcleaner"
+cask "little-snitch@5"     # application firewall
 cask "vlc"
+cask "balenaetcher"
 
-# Fonts (Nerd Fonts)
+# ── Fonts (Nerd Fonts — required for Powerlevel10k glyphs) ──────────
 cask "font-fira-code-nerd-font"
 cask "font-jetbrains-mono-nerd-font"
 cask "font-meslo-lg-nerd-font"
@@ -210,3 +194,18 @@ cask "font-sauce-code-pro-nerd-font"
 cask "font-roboto-mono-nerd-font"
 cask "font-inconsolata-nerd-font"
 cask "font-ubuntu-mono-nerd-font"
+
+# ════════════════════════════════════════════════════════════════════
+# MAC APP STORE (requires `mas` + being signed into the App Store)
+# ════════════════════════════════════════════════════════════════════
+mas "Xcode", id: 497799835
+mas "Tailscale", id: 1475387142
+
+# ════════════════════════════════════════════════════════════════════
+# VS CODE EXTENSIONS
+# ════════════════════════════════════════════════════════════════════
+vscode "anthropic.claude-code"
+vscode "mechatroner.rainbow-csv"
+vscode "janisdd.vscode-edit-csv"
+vscode "phplasma.csv-to-table"
+vscode "repreng.csv"

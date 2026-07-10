@@ -17,8 +17,16 @@ fi
 # ══════════════════════════════════════════════════════════════════
 # HOMEBREW
 # ══════════════════════════════════════════════════════════════════
+# Locate Homebrew on either architecture (Apple Silicon first, then Intel)
+# even if it is not yet on PATH, then load its environment.
+for _brew in /opt/homebrew/bin/brew /usr/local/bin/brew; do
+  if [[ -x "$_brew" ]]; then
+    eval "$("$_brew" shellenv)"
+    break
+  fi
+done
+unset _brew
 if command -v brew >/dev/null; then
-  eval "$(/usr/local/bin/brew shellenv)"
   FPATH="$(brew --prefix)/share/zsh/site-functions:$(brew --prefix)/share/zsh-completions:${FPATH}"
 fi
 
@@ -90,14 +98,18 @@ zstyle ':completion:*:scp:*' hosts off
 # ══════════════════════════════════════════════════════════════════
 typeset -U path  # deduplicate PATH
 
+# Homebrew prefix — Intel: /usr/local, Apple Silicon: /opt/homebrew.
+# Resolved once so the rest of this file is architecture-portable.
+export BREW_PREFIX="$(brew --prefix 2>/dev/null || echo /opt/homebrew)"
+
 # Cargo (Rust)
 export PATH="$HOME/.cargo/bin:$PATH"
 
 # Helm
-export PATH="/usr/local/opt/helm@3/bin:$PATH"
+export PATH="${BREW_PREFIX}/opt/helm@3/bin:$PATH"
 
 # Android SDK
-export ANDROID_HOME="/usr/local/share/android-commandlinetools"
+export ANDROID_HOME="${BREW_PREFIX}/share/android-commandlinetools"
 export PATH="$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/emulator:$ANDROID_HOME/platform-tools:$PATH"
 
 # Composer (PHP)
@@ -208,7 +220,6 @@ fpath=($HOME/.docker/completions $fpath)
 
 # OpenClaw completions
 if command -v openclaw >/dev/null 2>&1; then
-  source <(openclaw completion --shell zsh)
 fi
 
 # Claude Code CLI
@@ -243,14 +254,14 @@ bindkey ' ' magic-space                   # history expansion on space
 # ══════════════════════════════════════════════════════════════════
 # POWERLEVEL10K THEME
 # ══════════════════════════════════════════════════════════════════
-source /usr/local/share/powerlevel10k/powerlevel10k.zsh-theme
+source ${BREW_PREFIX}/share/powerlevel10k/powerlevel10k.zsh-theme
 [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
 
 # ══════════════════════════════════════════════════════════════════
 # ZSH PLUGINS
 # ══════════════════════════════════════════════════════════════════
-source /usr/local/share/zsh-autosuggestions/zsh-autosuggestions.zsh
-source /usr/local/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
+source ${BREW_PREFIX}/share/zsh-autosuggestions/zsh-autosuggestions.zsh
+source ${BREW_PREFIX}/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
 
 # Autosuggestion styling
 ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE="fg=#555555,underline"
@@ -315,4 +326,7 @@ add-zsh-hook chpwd _auto_venv
 typeset -U path
 
 # try-rs integration
-source '/Users/jordanlang/Library/Application Support/try-rs/try-rs.zsh'
+[[ -f '/Users/jordanlang/Library/Application Support/try-rs/try-rs.zsh' ]] && source '/Users/jordanlang/Library/Application Support/try-rs/try-rs.zsh'
+
+# OpenClaw Completion
+source "/Users/jordanlang/.openclaw/completions/openclaw.zsh"

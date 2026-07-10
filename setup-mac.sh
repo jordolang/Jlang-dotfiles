@@ -1,612 +1,309 @@
 #!/usr/bin/env bash
 # ╔══════════════════════════════════════════════════════════════════╗
-# ║        JORDAN LANG'S MAC DEVELOPMENT ENVIRONMENT SETUP           ║
+# ║        JORDAN LANG'S MAC DEVELOPMENT ENVIRONMENT SETUP            ║
 # ║                                                                  ║
-# ║  This script installs all CLI tools, development environments,  ║
-# ║  and configurations needed to replicate Jordan's dev setup.     ║
+# ║  Reproduces the full terminal dev setup on a fresh Mac:          ║
+# ║    • Homebrew + everything in ./Brewfile (arch-aware)            ║
+# ║    • Node / Python / Ruby / Rust / Go toolchains                ║
+# ║    • Dotfiles (zsh, p10k, git) symlinked from this repo          ║
+# ║    • Claude Code CLI + `claude` / `claude-go` / `claude-cmd`     ║
 # ║                                                                  ║
-# ║  Usage: bash setup-mac.sh                                        ║
+# ║  Works on both Apple Silicon (/opt/homebrew) and Intel           ║
+# ║  (/usr/local). Safe to re-run — every step is idempotent.        ║
+# ║                                                                  ║
+# ║  Usage:  bash setup-mac.sh                                       ║
 # ╚══════════════════════════════════════════════════════════════════╝
 
-set -e
+# Fail on unset vars and broken pipes, but NOT on any single command
+# error — a flaky cask must not abort a 45-minute unattended install.
+set -uo pipefail
 
-# Colors for output
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-BLUE='\033[0;34m'
-CYAN='\033[0;36m'
-NC='\033[0m' # No Color
+# ── Output helpers ──────────────────────────────────────────────────
+RED='\033[0;31m'; GREEN='\033[0;32m'; YELLOW='\033[1;33m'
+BLUE='\033[0;34m'; CYAN='\033[0;36m'; NC='\033[0m'
+print_header()  { echo -e "\n${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"; echo -e "${CYAN}  $1${NC}"; echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}\n"; }
+print_success() { echo -e "${GREEN}✓${NC} $1"; }
+print_error()   { echo -e "${RED}✗${NC} $1"; }
+print_warning() { echo -e "${YELLOW}⚠${NC} $1"; }
+print_info()    { echo -e "${CYAN}ℹ${NC} $1"; }
 
-# Helper functions
-print_header() {
-    echo -e "\n${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
-    echo -e "${CYAN}  $1${NC}"
-    echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}\n"
-}
+# ── Resolve where this script (and the Brewfile) live ───────────────
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+DOTFILES_REPO="https://github.com/jordolang/Jlang-dotfiles.git"
 
-print_success() {
-    echo -e "${GREEN}✓${NC} $1"
-}
-
-print_error() {
-    echo -e "${RED}✗${NC} $1"
-}
-
-print_warning() {
-    echo -e "${YELLOW}⚠${NC} $1"
-}
-
-print_info() {
-    echo -e "${CYAN}ℹ${NC} $1"
-}
-
-# Check if running on macOS
 if [[ "$OSTYPE" != "darwin"* ]]; then
-    print_error "This script is designed for macOS only."
-    exit 1
+    print_error "This script is for macOS only."; exit 1
 fi
 
-print_header "Jordan Lang's Mac Setup Script"
-echo "This will install:"
-echo "  • Homebrew + all formulae and casks"
-echo "  • Python, Node, Ruby, Rust, Go toolchains"
-echo "  • Docker, Kubernetes, Terraform tools"
-echo "  • ZSH with Powerlevel10k theme"
-echo "  • All CLI utilities and dev tools"
+print_header "Jordan Lang's Mac Setup"
+echo "This installs Homebrew + the full Brewfile, all language toolchains,"
+echo "your dotfiles, and Claude Code. It is safe to run more than once."
 echo ""
-read -p "Continue? (y/n) " -n 1 -r
-echo
-if [[ ! $REPLY =~ ^[Yy]$ ]]; then
-    print_warning "Setup cancelled."
-    exit 0
-fi
+read -rp "Continue? (y/n) " -n 1 REPLY; echo
+[[ "$REPLY" =~ ^[Yy]$ ]] || { print_warning "Cancelled."; exit 0; }
 
 # ══════════════════════════════════════════════════════════════════
 # 1. XCODE COMMAND LINE TOOLS
 # ══════════════════════════════════════════════════════════════════
-print_header "Installing Xcode Command Line Tools"
+print_header "Xcode Command Line Tools"
 if xcode-select -p &>/dev/null; then
-    print_success "Xcode Command Line Tools already installed"
+    print_success "Already installed"
 else
-    print_info "Installing Xcode Command Line Tools..."
+    print_info "Installing… complete the GUI prompt, then re-run this script."
     xcode-select --install
-    print_warning "Please complete the Xcode installation and re-run this script."
     exit 0
 fi
 
 # ══════════════════════════════════════════════════════════════════
-# 2. HOMEBREW
+# 2. HOMEBREW (architecture-aware)
 # ══════════════════════════════════════════════════════════════════
-print_header "Installing Homebrew"
-if command -v brew &>/dev/null; then
+print_header "Homebrew"
+
+# Apple Silicon → /opt/homebrew, Intel → /usr/local
+if [[ "$(uname -m)" == "arm64" ]]; then
+    BREW_BIN="/opt/homebrew/bin/brew"
+else
+    BREW_BIN="/usr/local/bin/brew"
+fi
+
+if [[ -x "$BREW_BIN" ]]; then
     print_success "Homebrew already installed"
-    print_info "Updating Homebrew..."
-    brew update
 else
-    print_info "Installing Homebrew..."
+    print_info "Installing Homebrew…"
     /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-    
-    # Add Homebrew to PATH
-    if [[ $(uname -m) == "arm64" ]]; then
-        eval "$(/opt/homebrew/bin/brew shellenv)"
-    else
-        eval "$(/usr/local/bin/brew shellenv)"
-    fi
-    print_success "Homebrew installed"
+fi
+
+# Load brew into THIS shell for the rest of the script…
+eval "$("$BREW_BIN" shellenv)"
+
+# …and persist it to ~/.zprofile so future login shells find it too.
+BREW_SHELLENV="eval \"\$($BREW_BIN shellenv)\""
+if ! grep -qF "$BREW_BIN shellenv" "$HOME/.zprofile" 2>/dev/null; then
+    print_info "Adding Homebrew to ~/.zprofile"
+    printf '\n# Homebrew\n%s\n' "$BREW_SHELLENV" >> "$HOME/.zprofile"
+fi
+
+print_info "Updating Homebrew…"
+brew update
+
+# ══════════════════════════════════════════════════════════════════
+# 3. INSTALL EVERYTHING FROM THE BREWFILE
+# ══════════════════════════════════════════════════════════════════
+print_header "Installing packages from Brewfile"
+if [[ -f "$SCRIPT_DIR/Brewfile" ]]; then
+    print_info "Running brew bundle (formulae, casks, App Store apps, VS Code extensions)…"
+    # --no-lock avoids writing a Brewfile.lock.json into the repo.
+    brew bundle install --file="$SCRIPT_DIR/Brewfile" --no-lock || \
+        print_warning "Some packages failed — see the summary above. Re-running the script will retry them."
+    print_success "Brewfile processed"
+else
+    print_error "Brewfile not found next to this script ($SCRIPT_DIR/Brewfile)"
 fi
 
 # ══════════════════════════════════════════════════════════════════
-# 3. HOMEBREW FORMULAE (CLI tools)
+# 4. DEFAULT SHELL → ZSH
 # ══════════════════════════════════════════════════════════════════
-print_header "Installing Homebrew Formulae"
-
-# Core utilities
-formulae=(
-    # Shell & Terminal
-    zsh
-    zsh-autosuggestions
-    zsh-syntax-highlighting
-    zsh-completions
-    powerlevel10k
-    bash
-    bash-completion@2
-    
-    # Modern CLI replacements
-    eza          # Better ls
-    bat          # Better cat
-    fd           # Better find
-    ripgrep      # Better grep
-    fzf          # Fuzzy finder
-    zoxide       # Smart cd
-    delta        # Better git diff
-    
-    # File managers & viewers
-    yazi
-    tree
-    htop
-    fastfetch
-    
-    # Text editors
-    micro
-    neovim
-    
-    # Version control
-    git
-    git-lfs
-    git-delta
-    git-flow
-    gh           # GitHub CLI
-    
-    # Languages & compilers
-    python@3.13
-    python@3.14
-    node
-    go
-    rust
-    gcc
-    
-    # Version managers
-    nvm          # Node version manager
-    pyenv        # Python version manager
-    rbenv        # Ruby version manager
-    ruby-build
-    
-    # Package managers
-    composer     # PHP
-    cocoapods    # iOS
-    pnpm
-    
-    # Build tools
-    cmake
-    make
-    automake
-    autoconf
-    libtool
-    pkg-config
-    
-    # Container & orchestration
-    docker
-    docker-compose
-    docker-completion
-    lazydocker
-    kubernetes-cli
-    helm@3
-    terraform
-    ansible
-    
-    # Databases
-    postgresql@14
-    mysql
-    mariadb
-    redis
-    mongodb-community
-    mongodb-atlas-cli
-    mongodb-database-tools
-    mongosh
-    sqlite
-    
-    # Cloud & DevOps
-    wget
-    curl
-    rsync
-    aria2
-    rclone
-    
-    # Development utilities
-    jq           # JSON processor
-    yq           # YAML processor
-    tldr         # Simplified man pages
-    thefuck      # Command correction
-    terminal-notifier
-    trash
-    
-    # Media & image processing
-    ffmpeg
-    imagemagick
-    
-    # Network tools
-    nmap
-    telnet
-    netcat
-    
-    # Compression
-    unzip
-    xz
-    zstd
-    
-    # Misc dev tools
-    ollama
-    tmux
-    multitail
-    lolcat
-    figlet
-    mas          # Mac App Store CLI
-    yt-dlp       # YouTube downloader
-    
-    # Specific tools from your setup
-    try-rs
-    deno
-    bun
-    uv
-    pipx
-    yamllint
-    tidy-html5
-    tesseract
-    
-    # Homebrew management
-    brew-cleanup-go
-)
-
-for formula in "${formulae[@]}"; do
-    if brew list --formula | grep -q "^${formula}\$"; then
-        print_success "$formula already installed"
-    else
-        print_info "Installing $formula..."
-        brew install "$formula" || print_warning "Failed to install $formula"
-    fi
-done
-
-# ══════════════════════════════════════════════════════════════════
-# 4. HOMEBREW CASKS (Applications)
-# ══════════════════════════════════════════════════════════════════
-print_header "Installing Homebrew Casks"
-
-casks=(
-    # Browsers
-    google-chrome
-    firefox
-    arc
-    
-    # Development
-    cursor           # AI code editor
-    visual-studio-code
-    iterm2
-    warp
-    alacritty
-    docker-desktop
-    orbstack
-    
-    # Design & Creative
-    figma
-    
-    # Communication
-    whatsapp
-    telegram
-    messenger
-    
-    # Productivity
-    obsidian
-    notion
-    rectangle        # Window management
-    maccy           # Clipboard manager
-    
-    # Database tools
-    tableplus
-    
-    # API & Network
-    postman
-    
-    # Utilities
-    keka            # Archive manager
-    vlc
-    the-unarchiver
-    appcleaner
-    
-    # Fonts (Nerd Fonts for terminal)
-    font-fira-code-nerd-font
-    font-jetbrains-mono-nerd-font
-    font-meslo-lg-nerd-font
-    font-hack-nerd-font
-    font-sauce-code-pro-nerd-font
-    font-roboto-mono-nerd-font
-    font-inconsolata-nerd-font
-    font-ubuntu-mono-nerd-font
-)
-
-print_info "Installing casks (this may take a while)..."
-for cask in "${casks[@]}"; do
-    if brew list --cask | grep -q "^${cask}\$"; then
-        print_success "$cask already installed"
-    else
-        print_info "Installing $cask..."
-        brew install --cask "$cask" 2>/dev/null || print_warning "Failed to install $cask (may require manual installation)"
-    fi
-done
-
-# ══════════════════════════════════════════════════════════════════
-# 5. SET ZSH AS DEFAULT SHELL
-# ══════════════════════════════════════════════════════════════════
-print_header "Setting ZSH as default shell"
+print_header "Default shell"
 if [[ "$SHELL" == */zsh ]]; then
-    print_success "ZSH is already the default shell"
+    print_success "Already zsh"
 else
-    print_info "Changing default shell to ZSH..."
-    chsh -s "$(which zsh)"
-    print_success "Default shell changed to ZSH (restart terminal to apply)"
+    print_info "Switching default shell to zsh…"
+    chsh -s "$(command -v zsh)" && print_success "Done (restart terminal to apply)"
 fi
 
 # ══════════════════════════════════════════════════════════════════
-# 6. PYTHON SETUP
+# 5. DOTFILES — clone (if needed) + symlink
 # ══════════════════════════════════════════════════════════════════
-print_header "Setting up Python environment"
+print_header "Dotfiles"
 
-# Install pipx packages
-print_info "Installing Python packages via pipx..."
-pipx_packages=(
-    "youtube-dl"
-    "black"
-    "flake8"
-    "pytest"
-    "ipython"
-)
+# Prefer this repo if the script is being run from inside it; otherwise
+# fall back to ~/Repos/Jlang-dotfiles, cloning if it isn't there yet.
+if [[ -d "$SCRIPT_DIR/.git" ]]; then
+    DOTFILES_DIR="$SCRIPT_DIR"
+elif [[ -d "$HOME/Repos/Jlang-dotfiles/.git" ]]; then
+    DOTFILES_DIR="$HOME/Repos/Jlang-dotfiles"
+else
+    print_info "Cloning dotfiles to ~/Repos/Jlang-dotfiles…"
+    mkdir -p "$HOME/Repos"
+    git clone "$DOTFILES_REPO" "$HOME/Repos/Jlang-dotfiles"
+    DOTFILES_DIR="$HOME/Repos/Jlang-dotfiles"
+fi
+print_success "Using dotfiles at $DOTFILES_DIR"
 
-for pkg in "${pipx_packages[@]}"; do
-    if pipx list | grep -q "$pkg"; then
-        print_success "$pkg already installed"
-    else
-        print_info "Installing $pkg..."
-        pipx install "$pkg" || print_warning "Failed to install $pkg"
+# Back up anything real that we're about to replace with a symlink.
+backup_dir="$HOME/.dotfiles-backup-$(date +%Y%m%d_%H%M%S)"
+link() {  # link <source-in-repo> <target-in-home>
+    local src="$DOTFILES_DIR/$1" dest="$2"
+    [[ -e "$src" ]] || { print_warning "missing in repo: $1"; return; }
+    if [[ -e "$dest" && ! -L "$dest" ]]; then
+        mkdir -p "$backup_dir"; cp -R "$dest" "$backup_dir/" 2>/dev/null
     fi
-done
+    mkdir -p "$(dirname "$dest")"
+    ln -sfn "$src" "$dest" && print_success "linked $(basename "$dest")"
+}
 
-# ══════════════════════════════════════════════════════════════════
-# 7. NODE.JS SETUP
-# ══════════════════════════════════════════════════════════════════
-print_header "Setting up Node.js environment"
+link ".zshrc"     "$HOME/.zshrc"
+link ".p10k.zsh"  "$HOME/.p10k.zsh"
+link ".gitconfig" "$HOME/.gitconfig"
+link ".fzf.zsh"   "$HOME/.fzf.zsh"
+link ".zsh"       "$HOME/.zsh"
+link ".config/micro" "$HOME/.config/micro"
+link ".config/yazi"  "$HOME/.config/yazi"
 
-# Load NVM
-export NVM_DIR="$HOME/.nvm"
-if [ -s "/usr/local/opt/nvm/nvm.sh" ]; then
-    source "/usr/local/opt/nvm/nvm.sh"
-elif [ -s "/opt/homebrew/opt/nvm/nvm.sh" ]; then
-    source "/opt/homebrew/opt/nvm/nvm.sh"
+# claude-cmd lives inside ~/.claude (a directory Claude Code manages), so
+# symlink JUST the one file rather than the whole directory.
+if [[ -f "$DOTFILES_DIR/.claude/claude-cmd.zsh" ]]; then
+    mkdir -p "$HOME/.claude"
+    ln -sfn "$DOTFILES_DIR/.claude/claude-cmd.zsh" "$HOME/.claude/claude-cmd.zsh"
+    print_success "linked claude-cmd.zsh"
 fi
 
-# Install latest Node LTS
-if command -v nvm &>/dev/null; then
-    print_info "Installing Node.js LTS via NVM..."
-    nvm install --lts
-    nvm use --lts
-    print_success "Node.js LTS installed"
+[[ -d "$backup_dir" ]] && print_info "Replaced files backed up to $backup_dir"
+
+# ══════════════════════════════════════════════════════════════════
+# 6. CLAUDE CODE CLI  →  claude / claude-go / claude-cmd
+# ══════════════════════════════════════════════════════════════════
+print_header "Claude Code"
+if [[ -x "$HOME/.local/bin/claude" ]] || command -v claude &>/dev/null; then
+    print_success "Claude Code already installed"
 else
-    print_warning "NVM not found, skipping Node installation via NVM"
+    print_info "Installing Claude Code (native installer)…"
+    curl -fsSL https://claude.ai/install.sh | bash || \
+        print_warning "Claude install failed — install manually: https://docs.claude.com/claude-code"
+fi
+# `claude` (alias), `claude-go` (alias) and `claude-cmd` (function) are all
+# defined in the dotfiles: aliases in .zshrc, claude-cmd in ~/.claude/claude-cmd.zsh.
+print_info "claude / claude-go / claude-cmd are provided by your dotfiles once the new shell loads."
+
+# ══════════════════════════════════════════════════════════════════
+# 7. NODE.JS  (nvm)
+# ══════════════════════════════════════════════════════════════════
+print_header "Node.js"
+export NVM_DIR="$HOME/.nvm"; mkdir -p "$NVM_DIR"
+if [[ -s "$(brew --prefix)/opt/nvm/nvm.sh" ]]; then
+    # shellcheck disable=SC1091
+    . "$(brew --prefix)/opt/nvm/nvm.sh"
+    print_info "Installing Node LTS + current via nvm…"
+    nvm install --lts && nvm alias default 'lts/*'
+    nvm install node   # latest current
+    print_success "Node $(node -v 2>/dev/null) active"
+
+    print_info "Installing global npm packages…"
+    for pkg in pm2 vercel; do
+        npm install -g "$pkg" >/dev/null 2>&1 && print_success "npm -g $pkg" || print_warning "npm -g $pkg failed"
+    done
+    corepack enable 2>/dev/null || true   # pnpm/yarn shims
+else
+    print_warning "nvm not found — skipping Node (is 'nvm' in the Brewfile installed?)"
 fi
 
-# Install global npm packages
-print_info "Installing global npm packages..."
-npm_packages=(
-    "vercel"
-    "npm"
-    "node-gyp"
-    "@modelcontextprotocol/inspector"
-    "@modelcontextprotocol/server-github"
-    "openclaw"
-    "mcporter"
-)
-
-for pkg in "${npm_packages[@]}"; do
-    print_info "Installing $pkg..."
-    npm install -g "$pkg" || print_warning "Failed to install $pkg"
-done
+# ══════════════════════════════════════════════════════════════════
+# 8. PYTHON  (pyenv + pipx tools)
+# ══════════════════════════════════════════════════════════════════
+print_header "Python"
+if command -v pyenv &>/dev/null; then
+    export PYENV_ROOT="$HOME/.pyenv"; export PATH="$PYENV_ROOT/bin:$PATH"
+    eval "$(pyenv init -)"
+    print_success "pyenv ready ($(pyenv --version 2>/dev/null))"
+fi
+if command -v pipx &>/dev/null; then
+    pipx ensurepath >/dev/null 2>&1
+    print_info "Installing pipx CLI tools…"
+    for pkg in black flake8 ipython pytest; do
+        pipx install "$pkg" >/dev/null 2>&1 && print_success "pipx $pkg" || print_warning "pipx $pkg (already installed or failed)"
+    done
+fi
 
 # ══════════════════════════════════════════════════════════════════
-# 8. RUBY SETUP
+# 9. RUBY  (rbenv + gems)
 # ══════════════════════════════════════════════════════════════════
-print_header "Setting up Ruby environment"
-
+print_header "Ruby"
 if command -v rbenv &>/dev/null; then
-    export RBENV_ROOT="$HOME/.rbenv"
-    export PATH="$RBENV_ROOT/bin:$PATH"
-    eval "$(rbenv init - zsh)"
-    
-    # Install latest stable Ruby
-    print_info "Installing latest stable Ruby..."
-    latest_ruby=$(rbenv install -l | grep -v - | tail -1 | xargs)
-    if rbenv versions | grep -q "$latest_ruby"; then
-        print_success "Ruby $latest_ruby already installed"
-    else
-        rbenv install "$latest_ruby"
-        rbenv global "$latest_ruby"
-        print_success "Ruby $latest_ruby installed and set as global"
+    export RBENV_ROOT="$HOME/.rbenv"; export PATH="$RBENV_ROOT/bin:$PATH"
+    eval "$(rbenv init - zsh)" 2>/dev/null || eval "$(rbenv init -)"
+    latest_ruby="$(rbenv install -l 2>/dev/null | grep -vE '[a-zA-Z-]' | tail -1 | xargs)"
+    if [[ -n "$latest_ruby" ]]; then
+        if rbenv versions --bare 2>/dev/null | grep -qx "$latest_ruby"; then
+            print_success "Ruby $latest_ruby already installed"
+        else
+            print_info "Installing Ruby $latest_ruby (this can take a while)…"
+            rbenv install "$latest_ruby" && rbenv global "$latest_ruby"
+        fi
+        print_info "Installing gems (bundler, cocoapods, fastlane)…"
+        gem install bundler cocoapods fastlane >/dev/null 2>&1 && print_success "gems installed" || print_warning "gem install had issues"
     fi
-    
-    # Install common gems
-    print_info "Installing common Ruby gems..."
-    gem install bundler cocoapods fastlane
 else
-    print_warning "rbenv not found, skipping Ruby setup"
+    print_warning "rbenv not found — skipping Ruby"
 fi
 
 # ══════════════════════════════════════════════════════════════════
-# 9. RUST SETUP
+# 10. RUST  (rustup)
 # ══════════════════════════════════════════════════════════════════
-print_header "Setting up Rust environment"
-
-if command -v cargo &>/dev/null; then
-    print_success "Rust already installed"
-    print_info "Updating Rust..."
-    rustup update
+print_header "Rust"
+if command -v rustup &>/dev/null || [[ -x "$HOME/.cargo/bin/rustup" ]]; then
+    "$HOME/.cargo/bin/rustup" update 2>/dev/null || rustup update
+    print_success "Rust toolchain up to date"
 else
-    print_info "Installing Rust..."
+    print_info "Installing Rust via rustup…"
     curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
-    source "$HOME/.cargo/env"
     print_success "Rust installed"
 fi
 
-# Install Rust tools
-print_info "Installing Rust-based tools..."
-cargo install matugen || print_warning "Failed to install matugen"
-
 # ══════════════════════════════════════════════════════════════════
-# 10. RESTORE DOTFILES FROM GITHUB
+# 11. GIT IDENTITY
 # ══════════════════════════════════════════════════════════════════
-print_header "Restoring dotfiles"
-
-DOTFILES_REPO="https://github.com/jordolang/Jlang-dotfiles.git"
-DOTFILES_DIR="$HOME/.dotfiles"
-
-print_info "Cloning dotfiles repository..."
-if [ -d "$DOTFILES_DIR" ]; then
-    print_warning "Dotfiles directory already exists, pulling latest changes..."
-    cd "$DOTFILES_DIR"
-    git pull
+print_header "Git identity"
+# .gitconfig is symlinked from the repo; only fill in name/email if unset.
+if [[ -z "$(git config --global user.email 2>/dev/null)" ]]; then
+    read -rp "Git name  [Jordan Lang]: " git_name;  git_name="${git_name:-Jordan Lang}"
+    read -rp "Git email [jordolang@gmail.com]: " git_email; git_email="${git_email:-jordolang@gmail.com}"
+    git config --global user.name  "$git_name"
+    git config --global user.email "$git_email"
+    print_success "Set git identity: $git_name <$git_email>"
 else
-    git clone "$DOTFILES_REPO" "$DOTFILES_DIR"
-fi
-
-# Backup existing files
-print_info "Backing up existing dotfiles..."
-backup_dir="$HOME/.dotfiles-backup-$(date +%Y%m%d_%H%M%S)"
-mkdir -p "$backup_dir"
-
-files_to_backup=(
-    "$HOME/.zshrc"
-    "$HOME/.p10k.zsh"
-    "$HOME/.gitconfig"
-    "$HOME/.fzf.zsh"
-)
-
-for file in "${files_to_backup[@]}"; do
-    if [ -f "$file" ]; then
-        cp "$file" "$backup_dir/"
-        print_success "Backed up $(basename $file)"
-    fi
-done
-
-# Restore dotfiles
-print_info "Restoring dotfiles from repository..."
-if [ -d "$DOTFILES_DIR" ]; then
-    # Link main dotfiles
-    ln -sf "$DOTFILES_DIR/.zshrc" "$HOME/.zshrc"
-    ln -sf "$DOTFILES_DIR/.p10k.zsh" "$HOME/.p10k.zsh"
-    ln -sf "$DOTFILES_DIR/.gitconfig" "$HOME/.gitconfig"
-    
-    # Link .zsh directory
-    rm -rf "$HOME/.zsh"
-    ln -sf "$DOTFILES_DIR/.zsh" "$HOME/.zsh"
-    
-    # Link config directories (if they exist in dotfiles)
-    if [ -d "$DOTFILES_DIR/.config/micro" ]; then
-        ln -sf "$DOTFILES_DIR/.config/micro" "$HOME/.config/micro"
-    fi
-    
-    if [ -d "$DOTFILES_DIR/.config/yazi" ]; then
-        ln -sf "$DOTFILES_DIR/.config/yazi" "$HOME/.config/yazi"
-    fi
-    
-    print_success "Dotfiles restored and symlinked"
-else
-    print_warning "Dotfiles directory not found, skipping restoration"
-    print_info "You can manually clone the repository later: git clone $DOTFILES_REPO ~/.dotfiles"
+    print_success "Git identity already configured ($(git config --global user.email))"
 fi
 
 # ══════════════════════════════════════════════════════════════════
-# 11. CREATE DIRECTORIES
+# 12. STANDARD DIRECTORIES
 # ══════════════════════════════════════════════════════════════════
-print_header "Creating standard directories"
-
-directories=(
-    "$HOME/Repos"
-    "$HOME/.config"
-    "$HOME/.local/bin"
-)
-
-for dir in "${directories[@]}"; do
-    if [ -d "$dir" ]; then
-        print_success "$(basename $dir) already exists"
-    else
-        mkdir -p "$dir"
-        print_success "Created $dir"
-    fi
+print_header "Directories"
+for d in "$HOME/Repos" "$HOME/.config" "$HOME/.local/bin"; do
+    mkdir -p "$d" && print_success "$d"
 done
-
-# ══════════════════════════════════════════════════════════════════
-# 12. CONFIGURE GIT
-# ══════════════════════════════════════════════════════════════════
-print_header "Configuring Git"
-
-read -p "Enter your Git name (default: Jordan Lang): " git_name
-git_name=${git_name:-"Jordan Lang"}
-
-read -p "Enter your Git email (default: jordolang@gmail.com): " git_email
-git_email=${git_email:-"jordolang@gmail.com"}
-
-git config --global user.name "$git_name"
-git config --global user.email "$git_email"
-git config --global init.defaultBranch main
-git config --global pull.rebase true
-git config --global core.editor micro
-
-print_success "Git configured with name: $git_name and email: $git_email"
 
 # ══════════════════════════════════════════════════════════════════
 # 13. MACOS DEFAULTS
 # ══════════════════════════════════════════════════════════════════
-print_header "Setting macOS defaults"
-
-print_info "Configuring macOS preferences..."
-
-# Finder: show all filename extensions
+print_header "macOS defaults"
 defaults write NSGlobalDomain AppleShowAllExtensions -bool true
-
-# Finder: show hidden files
 defaults write com.apple.finder AppleShowAllFiles -bool true
-
-# Finder: show path bar
 defaults write com.apple.finder ShowPathbar -bool true
-
-# Disable the "Are you sure you want to open this application?" dialog
-defaults write com.apple.LaunchServices LSQuarantine -bool false
-
-# Trackpad: enable tap to click
 defaults write com.apple.driver.AppleBluetoothMultitouch.trackpad Clicking -bool true
 defaults -currentHost write NSGlobalDomain com.apple.mouse.tapBehavior -int 1
-
-# Expand save panel by default
 defaults write NSGlobalDomain NSNavPanelExpandedStateForSaveMode -bool true
-defaults write NSGlobalDomain NSNavPanelExpandedStateForSaveMode2 -bool true
-
-# Disable auto-correct
 defaults write NSGlobalDomain NSAutomaticSpellingCorrectionEnabled -bool false
-
-# Require password immediately after sleep or screen saver begins
 defaults write com.apple.screensaver askForPassword -int 1
 defaults write com.apple.screensaver askForPasswordDelay -int 0
-
-# Show battery percentage
 defaults write com.apple.menuextra.battery ShowPercent -string "YES"
-
-print_success "macOS defaults configured"
-print_info "Some changes require a restart to take effect"
+killall Finder 2>/dev/null || true
+print_success "Applied (some changes need a logout/restart)"
 
 # ══════════════════════════════════════════════════════════════════
-# 14. FINAL STEPS
+# DONE
 # ══════════════════════════════════════════════════════════════════
-print_header "Setup Complete!"
+print_header "Setup complete 🎉"
+cat <<'EOF'
+Next steps:
+  1. Restart your terminal:            exec zsh
+  2. Set your terminal font to a Nerd Font (e.g. "MesloLGS NF") for the P10k prompt
+  3. Sign in:  gh auth login  •  claude  •  Docker Desktop  •  App Store (for `mas`)
+  4. Verify the Claude commands:
+       claude --version
+       claude-go        (claude with --dangerously-skip-permissions)
+       claude-cmd "list files changed in the last commit"
 
-echo ""
-print_success "Your Mac development environment has been set up successfully!"
-echo ""
-echo "Next steps:"
-echo "  1. Restart your terminal (or run: exec zsh)"
-echo "  2. Run 'p10k configure' to customize your prompt"
-echo "  3. Sign in to your accounts (GitHub, Docker, etc.)"
-echo "  4. Review and customize your .zshrc if needed"
-echo ""
-echo "Useful commands:"
-echo "  • 'commands' - Show command cheatsheet"
-echo "  • 'menu' - Interactive command menu"
-echo "  • 'repo' - Jump to a project"
-echo "  • 'devinfo' - Show project information"
-echo ""
-print_info "Your old dotfiles have been backed up to: $backup_dir"
-echo ""
-print_warning "Some applications may require manual configuration or login."
-echo ""
-
-read -p "Would you like to restart the terminal now? (y/n) " -n 1 -r
-echo
-if [[ $REPLY =~ ^[Yy]$ ]]; then
-    exec zsh
-fi
+Handy shell commands from your dotfiles: menu · commands · repo · devinfo
+EOF
+read -rp "Restart the shell now? (y/n) " -n 1 REPLY; echo
+[[ "$REPLY" =~ ^[Yy]$ ]] && exec zsh
