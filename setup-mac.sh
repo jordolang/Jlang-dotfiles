@@ -4,18 +4,18 @@
 # ║                                                                  ║
 # ║  Reproduces a comprehensive terminal dev setup on a fresh Mac:   ║
 # ║    • Homebrew + everything in the repo Brewfile (arch-aware)     ║
-# ║    • Node/Python/Ruby/Rust/Go/Java/PHP/Elixir… toolchains        ║
+# ║    • Node/Python/Ruby/Rust/Go/Java/PHP/Elixir... toolchains        ║
 # ║    • Dotfiles (zsh, p10k, git) symlinked from this repo          ║
 # ║    • Claude Code CLI + `claude` / `claude-go` / `claude-cmd`     ║
 # ║                                                                  ║
 # ║  Works on Apple Silicon (/opt/homebrew) and Intel (/usr/local),  ║
 # ║  whether run from a local file OR piped:                         ║
 # ║      bash <(curl -fsSL .../main/setup-mac.sh)                    ║
-# ║  Safe to re-run — every step is idempotent.                     ║
+# ║  Safe to re-run - every step is idempotent.                     ║
 # ╚══════════════════════════════════════════════════════════════════╝
 
 # Fail on unset vars and broken pipes, but NOT on any single command
-# error — a flaky cask must not abort a long unattended install.
+# error - a flaky cask must not abort a long unattended install.
 set -uo pipefail
 
 # ── Output helpers ──────────────────────────────────────────────────
@@ -40,19 +40,19 @@ fi
 print_header "Jordan Lang's Mac Setup"
 echo "Installs Homebrew + a comprehensive dev toolchain (languages, version"
 echo "managers, databases, containers, cloud CLIs, and terminal tools), your"
-echo "dotfiles, and Claude Code. Idempotent — safe to run more than once."
+echo "dotfiles, and Claude Code. Idempotent - safe to run more than once."
 echo ""
 read -rp "Continue? (y/n) " -n 1 REPLY; echo
 [[ "$REPLY" =~ ^[Yy]$ ]] || { print_warning "Cancelled."; exit 0; }
 
 # ══════════════════════════════════════════════════════════════════
-# 1. XCODE COMMAND LINE TOOLS  (provides git, cc, make…)
+# 1. XCODE COMMAND LINE TOOLS  (provides git, cc, make...)
 # ══════════════════════════════════════════════════════════════════
 print_header "Xcode Command Line Tools"
 if xcode-select -p &>/dev/null; then
     print_success "Already installed"
 else
-    print_info "Installing… complete the GUI prompt, then re-run this script."
+    print_info "Installing... complete the GUI prompt, then re-run this script."
     xcode-select --install
     exit 0
 fi
@@ -70,32 +70,32 @@ fi
 if [[ -x "$BREW_BIN" ]]; then
     print_success "Homebrew already installed"
 else
-    print_info "Installing Homebrew…"
+    print_info "Installing Homebrew..."
     NONINTERACTIVE=1 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 fi
 
-# Load brew into THIS shell…
+# Load brew into THIS shell...
 eval "$("$BREW_BIN" shellenv)"
-# …and persist to ~/.zprofile for future login shells.
+# ...and persist to ~/.zprofile for future login shells.
 if ! grep -qF "$BREW_BIN shellenv" "$HOME/.zprofile" 2>/dev/null; then
     printf '\n# Homebrew\neval "$(%s shellenv)"\n' "$BREW_BIN" >> "$HOME/.zprofile"
     print_info "Added Homebrew to ~/.zprofile"
 fi
 
-print_info "Updating Homebrew…"
+print_info "Updating Homebrew..."
 brew update
 
 # ══════════════════════════════════════════════════════════════════
-# 3. DOTFILES REPO  (clone/refresh FIRST — the Brewfile lives here)
+# 3. DOTFILES REPO  (clone/refresh FIRST - the Brewfile lives here)
 #    Done before `brew bundle` so the Brewfile is always on disk even
-#    when this script is piped via `bash <(curl …)`.
+#    when this script is piped via `bash <(curl ...)`.
 # ══════════════════════════════════════════════════════════════════
 print_header "Dotfiles repository"
 if [[ -d "$DOTFILES_DIR/.git" ]]; then
-    print_info "Updating existing clone at $DOTFILES_DIR…"
-    git -C "$DOTFILES_DIR" pull --ff-only 2>/dev/null || print_warning "Could not fast-forward (local changes?) — using current checkout."
+    print_info "Updating existing clone at $DOTFILES_DIR..."
+    git -C "$DOTFILES_DIR" pull --ff-only 2>/dev/null || print_warning "Could not fast-forward (local changes?) - using current checkout."
 else
-    print_info "Cloning $DOTFILES_REPO → $DOTFILES_DIR…"
+    print_info "Cloning $DOTFILES_REPO -> $DOTFILES_DIR..."
     mkdir -p "$HOME/Repos"
     git clone --branch "$BRANCH" "$DOTFILES_REPO" "$DOTFILES_DIR" \
         || git clone "$DOTFILES_REPO" "$DOTFILES_DIR"
@@ -110,16 +110,16 @@ print_success "Dotfiles at $DOTFILES_DIR"
 print_header "Installing packages from Brewfile"
 BREWFILE="$DOTFILES_DIR/Brewfile"
 if [[ ! -f "$BREWFILE" ]]; then
-    print_warning "Brewfile not found in clone — fetching from $REPO_RAW"
+    print_warning "Brewfile not found in clone - fetching from $REPO_RAW"
     BREWFILE="$(mktemp -t Brewfile.XXXXXX)"
     curl -fsSL "$REPO_RAW/Brewfile" -o "$BREWFILE" \
-        || { print_error "Could not download Brewfile — aborting package install."; BREWFILE=""; }
+        || { print_error "Could not download Brewfile - aborting package install."; BREWFILE=""; }
 fi
 if [[ -n "$BREWFILE" && -f "$BREWFILE" ]]; then
-    print_info "Running brew bundle (this can take a while — grab a coffee ☕)…"
+    print_info "Running brew bundle (this can take a while - grab a coffee ☕)..."
     # Formulae/casks/mas/vscode. Individual failures are reported, not fatal.
     brew bundle install --file="$BREWFILE" --no-lock \
-        || print_warning "Some packages failed — see the summary above. Re-run to retry them."
+        || print_warning "Some packages failed - see the summary above. Re-run to retry them."
     print_success "Brewfile processed"
 else
     print_error "Skipped package install (no Brewfile). Fix connectivity and re-run."
@@ -147,7 +147,7 @@ link ".zsh"       "$HOME/.zsh"
 link ".config/micro" "$HOME/.config/micro"
 link ".config/yazi"  "$HOME/.config/yazi"
 
-# claude-cmd lives inside ~/.claude (Claude Code's managed dir) — link the file only.
+# claude-cmd lives inside ~/.claude (Claude Code's managed dir) - link the file only.
 if [[ -f "$DOTFILES_DIR/.claude/claude-cmd.zsh" ]]; then
     mkdir -p "$HOME/.claude"
     ln -sfn "$DOTFILES_DIR/.claude/claude-cmd.zsh" "$HOME/.claude/claude-cmd.zsh"
@@ -156,26 +156,26 @@ fi
 [[ -d "$backup_dir" ]] && print_info "Replaced files backed up to $backup_dir"
 
 # ══════════════════════════════════════════════════════════════════
-# 6. DEFAULT SHELL → ZSH
+# 6. DEFAULT SHELL -> ZSH
 # ══════════════════════════════════════════════════════════════════
 print_header "Default shell"
 if [[ "$SHELL" == */zsh ]]; then
     print_success "Already zsh"
 else
-    print_info "Switching default shell to zsh…"
+    print_info "Switching default shell to zsh..."
     chsh -s "$(command -v zsh)" && print_success "Done (restart terminal to apply)"
 fi
 
 # ══════════════════════════════════════════════════════════════════
-# 7. CLAUDE CODE CLI  →  claude / claude-go / claude-cmd
+# 7. CLAUDE CODE CLI  ->  claude / claude-go / claude-cmd
 # ══════════════════════════════════════════════════════════════════
 print_header "Claude Code"
 if [[ -x "$HOME/.local/bin/claude" ]] || command -v claude &>/dev/null; then
     print_success "Claude Code already installed"
 else
-    print_info "Installing Claude Code (native installer)…"
+    print_info "Installing Claude Code (native installer)..."
     curl -fsSL https://claude.ai/install.sh | bash \
-        || print_warning "Claude install failed — see https://docs.claude.com/claude-code"
+        || print_warning "Claude install failed - see https://docs.claude.com/claude-code"
 fi
 print_info "claude / claude-go / claude-cmd load from your dotfiles in a new shell."
 
@@ -187,21 +187,21 @@ export NVM_DIR="$HOME/.nvm"; mkdir -p "$NVM_DIR"
 if [[ -s "$(brew --prefix)/opt/nvm/nvm.sh" ]]; then
     # shellcheck disable=SC1091
     . "$(brew --prefix)/opt/nvm/nvm.sh"
-    print_info "Installing Node LTS + current via nvm…"
+    print_info "Installing Node LTS + current via nvm..."
     nvm install --lts && nvm alias default 'lts/*'
     nvm install node        # latest current
     nvm use --lts >/dev/null
     corepack enable 2>/dev/null || true   # yarn / pnpm shims
     print_success "Node $(node -v 2>/dev/null) active"
 
-    print_info "Installing global npm packages…"
+    print_info "Installing global npm packages..."
     for pkg in pm2 vercel typescript ts-node nodemon eslint prettier \
                npm-check-updates serve http-server; do
         npm install -g "$pkg" >/dev/null 2>&1 && print_success "npm -g $pkg" \
             || print_warning "npm -g $pkg failed"
     done
 else
-    print_warning "nvm not found — is it in the Brewfile / did brew bundle run?"
+    print_warning "nvm not found - is it in the Brewfile / did brew bundle run?"
 fi
 
 # ══════════════════════════════════════════════════════════════════
@@ -220,7 +220,7 @@ if command -v python3 &>/dev/null; then
 fi
 if command -v pipx &>/dev/null; then
     pipx ensurepath >/dev/null 2>&1
-    print_info "Installing pipx CLI tools…"
+    print_info "Installing pipx CLI tools..."
     for pkg in black flake8 ruff mypy ipython pytest poetry pipenv virtualenv cookiecutter; do
         pipx install "$pkg" >/dev/null 2>&1 && print_success "pipx $pkg" \
             || print_warning "pipx $pkg (already installed or failed)"
@@ -239,15 +239,15 @@ if command -v rbenv &>/dev/null; then
         if rbenv versions --bare 2>/dev/null | grep -qx "$latest_ruby"; then
             print_success "Ruby $latest_ruby already installed"
         else
-            print_info "Installing Ruby $latest_ruby (this can take a while)…"
+            print_info "Installing Ruby $latest_ruby (this can take a while)..."
             rbenv install "$latest_ruby" && rbenv global "$latest_ruby"
         fi
-        print_info "Installing gems (bundler, cocoapods, fastlane)…"
+        print_info "Installing gems (bundler, cocoapods, fastlane)..."
         gem install bundler cocoapods fastlane >/dev/null 2>&1 \
             && print_success "gems installed" || print_warning "gem install had issues"
     fi
 else
-    print_warning "rbenv not found — skipping Ruby"
+    print_warning "rbenv not found - skipping Ruby"
 fi
 
 # ══════════════════════════════════════════════════════════════════
@@ -259,7 +259,7 @@ if command -v rustup &>/dev/null || [[ -x "$HOME/.cargo/bin/rustup" ]]; then
     "$HOME/.cargo/bin/rustup" update 2>/dev/null || rustup update 2>/dev/null || true
     print_success "Rust toolchain ready"
 else
-    print_info "Installing Rust via rustup…"
+    print_info "Installing Rust via rustup..."
     curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
     print_success "Rust installed"
 fi
@@ -274,7 +274,7 @@ if command -v jenv &>/dev/null && brew --prefix openjdk &>/dev/null; then
     [[ -d "$jdk_path" ]] && jenv add "$jdk_path" >/dev/null 2>&1 && print_success "openjdk registered with jenv" \
         || print_info "openjdk present; run 'jenv add <jdk>' to manage versions"
 else
-    print_info "jenv/openjdk not both present — skipping (installed via Brewfile if listed)"
+    print_info "jenv/openjdk not both present - skipping (installed via Brewfile if listed)"
 fi
 
 # ══════════════════════════════════════════════════════════════════
