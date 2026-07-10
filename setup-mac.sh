@@ -91,9 +91,20 @@ brew update
 # ══════════════════════════════════════════════════════════════════
 print_header "Installing packages from Brewfile"
 if [[ -f "$SCRIPT_DIR/Brewfile" ]]; then
+    # Homebrew 6+ refuses to load formulae from untrusted third-party taps,
+    # which aborts the WHOLE bundle run. Trust every tap the Brewfile declares
+    # first so bundle can proceed past them (e.g. supabase/tap, hashicorp/tap).
+    while IFS= read -r line; do
+        [[ "$line" =~ ^tap[[:space:]]+\"([^\"]+)\" ]] || continue
+        tapname="${BASH_REMATCH[1]}"
+        brew tap "$tapname" >/dev/null 2>&1 || true
+        brew trust "$tapname" >/dev/null 2>&1 && print_success "trusted tap $tapname"
+    done < "$SCRIPT_DIR/Brewfile"
+
     print_info "Running brew bundle (formulae, casks, App Store apps, VS Code extensions)…"
-    # --no-lock avoids writing a Brewfile.lock.json into the repo.
-    brew bundle install --file="$SCRIPT_DIR/Brewfile" --no-lock || \
+    # Modern Homebrew doesn't write a Brewfile.lock.json by default and has
+    # dropped the --no-lock flag, so we no longer pass it.
+    brew bundle install --file="$SCRIPT_DIR/Brewfile" || \
         print_warning "Some packages failed — see the summary above. Re-running the script will retry them."
     print_success "Brewfile processed"
 else
@@ -148,7 +159,7 @@ link ".gitconfig" "$HOME/.gitconfig"
 link ".fzf.zsh"   "$HOME/.fzf.zsh"
 link ".zsh"       "$HOME/.zsh"
 link ".config/micro" "$HOME/.config/micro"
-link ".config/yazi"  "$HOME/.config/yazi"
+# .config/yazi is not tracked in this repo yet — add it here once it exists.
 
 # claude-cmd lives inside ~/.claude (a directory Claude Code manages), so
 # symlink JUST the one file rather than the whole directory.

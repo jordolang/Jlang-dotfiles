@@ -11,7 +11,10 @@
 # ╚══════════════════════════════════════════════════════════════════╝
 
 # ── Taps ────────────────────────────────────────────────────────────
+# Homebrew 6+ refuses formulae from untrusted third-party taps; setup-mac.sh
+# runs `brew trust` on each of these before `brew bundle`.
 tap "supabase/tap"
+tap "hashicorp/tap"        # terraform (removed from homebrew-core, BSL license)
 
 # ── Shell & terminal ────────────────────────────────────────────────
 brew "zsh"
@@ -100,7 +103,7 @@ brew "colima"              # container runtime without Docker Desktop
 brew "lazydocker"
 brew "kubernetes-cli"      # kubectl
 brew "helm@3"
-brew "terraform"
+brew "hashicorp/tap/terraform"
 brew "ansible"
 brew "qemu"
 
