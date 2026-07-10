@@ -17,7 +17,7 @@ This repository contains my complete terminal configuration, CLI tools setup, an
 - 📦 **All Dev Tools** - Python, Node, Ruby, Rust, Go, Docker, Kubernetes, Terraform
 - 🎯 **Interactive Menus** - Command center with searchable command reference
 - 🌈 **Syntax Highlighting** - Beautiful command highlighting with custom colors
-- 🤖 **AI-Integrated** - Claude CLI and MCP server support
+- 🤖 **AI-Integrated** - Claude Code (`claude`, `claude-go`, `claude-cmd`), Codex, opencode, gemini-cli
 
 ## 📸 Screenshots
 
@@ -33,38 +33,51 @@ The terminal features:
 ### One-Line Install (Fresh Mac)
 
 ```bash
-bash <(curl -fsSL https://raw.githubusercontent.com/jordolang/Jlang-dotfiles/main/setup-mac.sh)
+bash <(curl -fsSL https://raw.githubusercontent.com/jordolang/Jlang-dotfiles/master/setup-mac.sh)
 ```
 
-This will:
+The setup script is **architecture-aware** — it works on both Apple Silicon
+(`/opt/homebrew`) and Intel (`/usr/local`) Macs — and every step is
+idempotent, so it's safe to re-run. It will:
+
 1. Install Xcode Command Line Tools
-2. Install Homebrew + 150+ packages
-3. Set up Python, Node, Ruby, Rust, Go
-4. Configure ZSH with Powerlevel10k
-5. Clone and link all dotfiles
-6. Set macOS preferences
+2. Install Homebrew + everything in the [`Brewfile`](Brewfile) (~140 dev-core packages) via `brew bundle`
+3. Set up Node (nvm), Python (pyenv), Ruby (rbenv), Rust (rustup), and Go
+4. Symlink all dotfiles and configure ZSH with Powerlevel10k
+5. Install Claude Code and wire up the `claude` / `claude-go` / `claude-cmd` commands
+6. Apply macOS preferences
+
+> The `Brewfile` is a curated **dev-core** subset. A complete snapshot of the
+> source machine (every formula, cask, and App Store app — including niche and
+> beta apps) lives in [`Brewfile.full`](Brewfile.full) if you ever want the full mirror.
 
 ### Manual Installation
 
 ```bash
-# Clone this repository
-git clone https://github.com/jordolang/Jlang-dotfiles.git ~/.dotfiles
+# Clone this repository (the setup script uses ~/Repos/Jlang-dotfiles)
+git clone https://github.com/jordolang/Jlang-dotfiles.git ~/Repos/Jlang-dotfiles
+cd ~/Repos/Jlang-dotfiles
 
 # Backup your existing dotfiles
 mkdir -p ~/.dotfiles-backup
-cp ~/.zshrc ~/.p10k.zsh ~/.gitconfig ~/.dotfiles-backup/ 2>/dev/null
+cp ~/.zshrc ~/.p10k.zsh ~/.gitconfig ~/.fzf.zsh ~/.dotfiles-backup/ 2>/dev/null
 
 # Symlink dotfiles
-ln -sf ~/.dotfiles/.zshrc ~/.zshrc
-ln -sf ~/.dotfiles/.p10k.zsh ~/.p10k.zsh
-ln -sf ~/.dotfiles/.gitconfig ~/.gitconfig
-ln -sf ~/.dotfiles/.zsh ~/.zsh
+ln -sf "$PWD/.zshrc"     ~/.zshrc
+ln -sf "$PWD/.p10k.zsh"  ~/.p10k.zsh
+ln -sf "$PWD/.gitconfig" ~/.gitconfig
+ln -sf "$PWD/.fzf.zsh"   ~/.fzf.zsh
+ln -sfn "$PWD/.zsh"      ~/.zsh
+mkdir -p ~/.claude && ln -sf "$PWD/.claude/claude-cmd.zsh" ~/.claude/claude-cmd.zsh
 
 # Install Homebrew (if not installed)
 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 
 # Install packages from Brewfile
-brew bundle --file ~/.dotfiles/Brewfile
+brew bundle --file "$PWD/Brewfile"
+
+# Install Claude Code
+curl -fsSL https://claude.ai/install.sh | bash
 
 # Restart terminal
 exec zsh
@@ -91,6 +104,12 @@ exec zsh
 
 ### Git Configuration
 - `.gitconfig` - Git aliases, LFS, and credential helper setup
+
+### Package Manifests & Setup
+- `Brewfile` - Curated dev-core package list (`brew bundle`)
+- `Brewfile.full` - Complete machine snapshot (full mirror)
+- `setup-mac.sh` - Idempotent, architecture-aware bootstrap script
+- `.claude/claude-cmd.zsh` - The `claude-cmd` shell function (symlinked to `~/.claude/`)
 
 ## 🎯 Key Features Breakdown
 
@@ -131,6 +150,18 @@ cheat <command>   # Lookup cheat.sh
 gitignore <lang>  # Generate .gitignore
 ```
 
+### Claude Code (AI)
+```bash
+claude                      # Launch Claude Code (~/.local/bin/claude)
+claude-go                   # Claude Code with --dangerously-skip-permissions
+claude-cmd "<request>"      # One-shot: print a single shell command for a request
+claude-cmd -c "<request>"   # …and copy it to the clipboard (pbcopy)
+```
+- `claude` and `claude-go` are aliases defined in `.zshrc`.
+- `claude-cmd` is a shell function loaded from `~/.claude/claude-cmd.zsh`
+  (tracked in this repo at `.claude/claude-cmd.zsh` and symlinked by the setup
+  script). It asks Claude for exactly one shell command and prints nothing else.
+
 ### System Utilities
 ```bash
 myip / localip    # Show public/local IP
@@ -166,25 +197,26 @@ colors256         # Show terminal color palette
 - `delta` → better `git diff`
 
 ### Languages & Runtimes
-- **Python** 3.13, 3.14 + pyenv
-- **Node.js** + nvm
+- **Python** 3.11 / 3.13 / 3.14 + pyenv, pipx, uv
+- **Node.js** + nvm (pnpm, corepack)
 - **Ruby** + rbenv
-- **Rust** + cargo
+- **Rust** + rustup / cargo
 - **Go**
 - **PHP** + Composer
-- **Bun** & Deno
+- **mise** — polyglot version manager (asdf-compatible)
 
 ### Development Tools
-- **Editors**: Micro, Neovim, Cursor, VS Code
-- **Git**: git, gh (GitHub CLI), git-lfs, git-flow
-- **Containers**: Docker, Docker Compose, OrbStack, lazydocker
-- **Orchestration**: Kubernetes (kubectl), Helm, Terraform
-- **Databases**: PostgreSQL, MySQL, MongoDB, Redis, SQLite, TablePlus
+- **Editors**: Micro, Neovim, Cursor, VS Code, Zed
+- **Git**: git, gh (GitHub CLI), git-lfs, git-flow, git-delta, gitleaks
+- **Containers**: Docker, Docker Compose, Colima, OrbStack, lazydocker
+- **Orchestration**: Kubernetes (kubectl), Helm, Terraform, Ansible
+- **Databases**: PostgreSQL, MySQL, MongoDB (atlas-cli), Redis, Supabase, TablePlus
+- **AI/dev**: Claude Code, Codex, opencode, gemini-cli, ollama, semgrep
 
 ### Utilities
 - `tmux`, `htop`, `yazi`, `tree`, `fastfetch`
-- `jq`, `yq`, `tldr`, `thefuck`
-- `ollama`, `yt-dlp`, `ffmpeg`, `imagemagick`
+- `jq`, `yq`, `tldr`, `thefuck`, `just`, `cheat`
+- `ffmpeg`, `imagemagick`, `pandoc`, `tesseract`
 
 ## 📝 Customization
 
@@ -219,7 +251,7 @@ Run `p10k configure` to customize the Powerlevel10k theme interactively.
 
 ```bash
 # Update dotfiles from GitHub
-cd ~/.dotfiles
+cd ~/Repos/Jlang-dotfiles
 git pull
 
 # Update Homebrew packages
