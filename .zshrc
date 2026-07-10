@@ -226,6 +226,18 @@ fi
 alias claude="$HOME/.local/bin/claude"
 alias claude.app='open -a "Claude"'
 
+# Claude, permissions bypassed (YOLO mode)
+alias claude-go="$HOME/.local/bin/claude --dangerously-skip-permissions"
+
+# Ask Claude for a single terminal command — prints only the command, nothing else
+claude-cmd() {
+  if [[ $# -eq 0 ]]; then
+    echo "usage: claude-cmd <what you want the command to do>" >&2
+    return 1
+  fi
+  "$HOME/.local/bin/claude" -p "Output ONLY the single shell command that accomplishes the request below. No explanation, no markdown, no code fences, no backticks — just the raw command on one line. Request: $*"
+}
+
 # ══════════════════════════════════════════════════════════════════
 # FZF
 # ══════════════════════════════════════════════════════════════════
