@@ -33,7 +33,7 @@ The terminal features:
 ### One-Line Install (Fresh Mac)
 
 ```bash
-bash <(curl -fsSL https://raw.githubusercontent.com/jordolang/Jlang-dotfiles/master/setup-mac.sh)
+bash <(curl -fsSL https://raw.githubusercontent.com/jordolang/Jlang-dotfiles/main/setup-mac.sh)
 ```
 
 The setup script is **architecture-aware** — it works on both Apple Silicon

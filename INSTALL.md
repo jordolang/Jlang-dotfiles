@@ -7,7 +7,7 @@ This guide will help you set up Jordan Lang's development environment on a fresh
 For a **fresh Mac**, run this one-liner:
 
 ```bash
-bash <(curl -fsSL https://raw.githubusercontent.com/jordolang/Jlang-dotfiles/master/setup-mac.sh)
+bash <(curl -fsSL https://raw.githubusercontent.com/jordolang/Jlang-dotfiles/main/setup-mac.sh)
 ```
 
 This will:
@@ -349,7 +349,7 @@ This setup script will:
 - Install fonts and applications
 
 **Always review scripts before running them on your system!** You can view the setup script at:
-https://github.com/jordolang/Jlang-dotfiles/blob/master/setup-mac.sh
+https://github.com/jordolang/Jlang-dotfiles/blob/main/setup-mac.sh
 
 ---
 
