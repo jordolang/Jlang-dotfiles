@@ -218,10 +218,6 @@ fpath=($HOME/.docker/completions $fpath)
 # Bun completions
 [ -s "$HOME/.bun/_bun" ] && source "$HOME/.bun/_bun"
 
-# OpenClaw completions
-if command -v openclaw >/dev/null 2>&1; then
-fi
-
 # Claude Code CLI
 alias claude="$HOME/.local/bin/claude"
 alias claude.app='open -a "Claude"'
@@ -232,13 +228,33 @@ alias claude-go="$HOME/.local/bin/claude --dangerously-skip-permissions"
 # Codex, approvals and sandbox bypassed (YOLO mode)
 alias codex-go="codex --dangerously-bypass-approvals-and-sandbox"
 
-# Ask Claude for a single terminal command — prints only the command, nothing else
+# Ask Claude for a single terminal command — loads it onto the prompt line, ready to edit or run
 claude-cmd() {
   if [[ $# -eq 0 ]]; then
     echo "usage: claude-cmd <what you want the command to do>" >&2
     return 1
   fi
-  "$HOME/.local/bin/claude" -p "Output ONLY the single shell command that accomplishes the request below. No explanation, no markdown, no code fences, no backticks — just the raw command on one line. Request: $*"
+
+  local cmd
+  cmd="$("$HOME/.local/bin/claude" -p "Output ONLY the single shell command that accomplishes the request below. No explanation, no markdown, no code fences, no backticks — just the raw command on one line. Request: $*")" || return 1
+
+  # Flatten to one line, drop any stray fencing, trim surrounding whitespace
+  cmd="${cmd//[$'\n\r']/ }"
+  cmd="${cmd//\`/}"
+  cmd="${cmd#"${cmd%%[![:space:]]*}"}"
+  cmd="${cmd%"${cmd##*[![:space:]]}"}"
+
+  if [[ -z $cmd ]]; then
+    echo "claude-cmd: no command returned" >&2
+    return 1
+  fi
+
+  # print -z pushes the line into the editor buffer; it needs an interactive shell
+  if [[ -o interactive ]]; then
+    print -z -- "$cmd"
+  else
+    print -r -- "$cmd"
+  fi
 }
 
 # Ask Codex for a single terminal command — prints only the command, nothing else
