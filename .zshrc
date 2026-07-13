@@ -229,6 +229,9 @@ alias claude.app='open -a "Claude"'
 # Claude, permissions bypassed (YOLO mode)
 alias claude-go="$HOME/.local/bin/claude --dangerously-skip-permissions"
 
+# Codex, approvals and sandbox bypassed (YOLO mode)
+alias codex-go="codex --dangerously-bypass-approvals-and-sandbox"
+
 # Ask Claude for a single terminal command — prints only the command, nothing else
 claude-cmd() {
   if [[ $# -eq 0 ]]; then
@@ -236,6 +239,17 @@ claude-cmd() {
     return 1
   fi
   "$HOME/.local/bin/claude" -p "Output ONLY the single shell command that accomplishes the request below. No explanation, no markdown, no code fences, no backticks — just the raw command on one line. Request: $*"
+}
+
+# Ask Codex for a single terminal command — prints only the command, nothing else
+codex-cmd() {
+  if [[ $# -eq 0 ]]; then
+    echo "usage: codex-cmd <what you want the command to do>" >&2
+    return 1
+  fi
+  codex exec --ephemeral --skip-git-repo-check --color never \
+    "Output ONLY the single shell command that accomplishes the request below. No explanation, no markdown, no code fences, no backticks — just the raw command on one line. Request: $*" \
+    2>/dev/null
 }
 
 # ══════════════════════════════════════════════════════════════════
@@ -341,4 +355,13 @@ typeset -U path
 [[ -f '/Users/jordanlang/Library/Application Support/try-rs/try-rs.zsh' ]] && source '/Users/jordanlang/Library/Application Support/try-rs/try-rs.zsh'
 
 # OpenClaw Completion
-source "/Users/jordanlang/.openclaw/completions/openclaw.zsh"
+[[ -f "/Users/jordanlang/.openclaw/completions/openclaw.zsh" ]] && source "/Users/jordanlang/.openclaw/completions/openclaw.zsh"
+
+# Yazi Launch
+function y() {
+	local tmp="$(mktemp -t "yazi-cwd.XXXXXX")" cwd
+	command yazi "$@" --cwd-file="$tmp"
+	IFS= read -r -d '' cwd < "$tmp"
+	[ "$cwd" != "$PWD" ] && [ -d "$cwd" ] && builtin cd -- "$cwd"
+	command rm -f -- "$tmp"
+}
