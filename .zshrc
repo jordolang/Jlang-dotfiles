@@ -71,7 +71,7 @@ setopt HIST_REDUCE_BLANKS      # remove extra blanks
 autoload -Uz compinit
 # Speed up compinit - only check cache once a day
 if [[ -n ${ZDOTDIR}/.zcompdump(#qN.mh+24) ]]; then
-  compinit
+  compinit -i
 else
   compinit -C
 fi
@@ -228,6 +228,10 @@ alias claude-go="$HOME/.local/bin/claude --dangerously-skip-permissions"
 # Codex, approvals and sandbox bypassed (YOLO mode)
 alias codex-go="codex --dangerously-bypass-approvals-and-sandbox"
 
+# Codex on the local model (qwen2.5-coder-14b via Ollama) — profile in
+# ~/.codex/local-coder.config.toml, provider in ~/.codex/config.toml
+alias codex-local="codex --profile local-coder"
+
 # Ask Claude for a single terminal command — loads it onto the prompt line, ready to edit or run
 claude-cmd() {
   if [[ $# -eq 0 ]]; then
@@ -255,6 +259,28 @@ claude-cmd() {
   else
     print -r -- "$cmd"
   fi
+}
+
+# Run Claude Code through the local claude-code-router → Ollama (qwen2.5-coder-14b).
+# Opt-in ONLY: normal `claude` uses your claude.ai login + connectors. This wrapper
+# sets the routing env vars for this invocation alone, so nothing global is changed.
+# Requires the router to be running (`ccr start`); it listens on 127.0.0.1:3456.
+claude-local() {
+  local _ccr_key
+  _ccr_key="$("$HOME/.claude-code-router/bin/ccr-claude-code-api-key-local-coder")" || {
+    echo "claude-local: failed to obtain local API key" >&2
+    return 1
+  }
+  ANTHROPIC_BASE_URL="http://127.0.0.1:3456" \
+  ANTHROPIC_API_BASE_URL="http://127.0.0.1:3456" \
+  CLAUDE_AGENT_API_BASE_URL="http://127.0.0.1:3456" \
+  ANTHROPIC_MODEL="ollama/qwen2.5-coder-14b" \
+  CCR_CLAUDE_CODE_MODEL="ollama/qwen2.5-coder-14b" \
+  CODEXL_CLAUDE_CODE_MODEL="ollama/qwen2.5-coder-14b" \
+  ANTHROPIC_SMALL_FAST_MODEL="ollama/qwen2.5-coder-14b" \
+  CLAUDE_CODE_ENABLE_GATEWAY_MODEL_DISCOVERY="1" \
+  ANTHROPIC_API_KEY="$_ccr_key" \
+    "$HOME/.local/bin/claude" "$@"
 }
 
 # Ask Codex for a single terminal command — prints only the command, nothing else
@@ -381,3 +407,151 @@ function y() {
 	[ "$cwd" != "$PWD" ] && [ -d "$cwd" ] && builtin cd -- "$cwd"
 	command rm -f -- "$tmp"
 }
+export PATH="/Applications/Ollama.app/Contents/MacOS:$PATH"
+
+#Ollama Configuration
+# Ollama aliases
+alias ai="ollama run llama3.2"
+alias ai-code="ollama run codellama"
+alias ai-list="ollama list"
+alias ai-update="brew upgrade ollama"
+
+# Functions for common tasks
+function ask() {
+    echo "$1" | ollama run llama3.2
+}
+
+function code_review() {
+    cat "$1" | ollama run codellama "Review this code for bugs and improvements:"
+}
+
+function translate() {
+    echo "$1" | ollama run llama3.2 "Translate to $2:"
+}
+
+# Model management
+function model_info() {
+    ollama show "$1"
+}
+
+function model_size() {
+    du -h ~/.ollama/models/*
+}
+
+test -e "${HOME}/.iterm2_shell_integration.zsh" && source "${HOME}/.iterm2_shell_integration.zsh"
+
+
+# Ollama (local) as an OpenAI-compatible API for third-party programs
+export OPENAI_API_KEY="ollama"
+export OPENAI_BASE_URL="http://localhost:11434/v1"
+alias open-webui='~/open-webui-venv/bin/open-webui'
+
+#ZSH Completions
+echo 'eval "$(/opt/homebrew/opt/zsh-patina/bin/zsh-patina activate)"' >> ~/.zshrc
+eval "$(/opt/homebrew/opt/zsh-patina/bin/zsh-patina activate)"
+eval "$(/opt/homebrew/opt/zsh-patina/bin/zsh-patina activate)"
+eval "$(/opt/homebrew/opt/zsh-patina/bin/zsh-patina activate)"
+eval "$(/opt/homebrew/opt/zsh-patina/bin/zsh-patina activate)"
+
+# ── Claude Overlay (macOS port) ─────────────────────────────────────────────
+# Launch the floating Claude overlay from anywhere by typing: claude-overlay
+# Runs detached (nohup + disown) so it survives closing this terminal; output
+# goes to ~/.claude-overlay/overlay.log. Relaunch is safe — the app supports
+# multiple instances. Stop it with: pkill -f claude_overlay.py
+claude-overlay() {
+  mkdir -p "$HOME/.claude-overlay"
+  nohup /Users/jordanlang/Repos/claude-overlay/run-macos.sh \
+    > "$HOME/.claude-overlay/overlay.log" 2>&1 &
+  disown
+  echo "Claude Overlay launched → ~/.claude-overlay/overlay.log"
+}
+eval "$(/opt/homebrew/opt/zsh-patina/bin/zsh-patina activate)"
+eval "$(/opt/homebrew/opt/zsh-patina/bin/zsh-patina activate)"
+eval "$(/opt/homebrew/opt/zsh-patina/bin/zsh-patina activate)"
+eval "$(/opt/homebrew/opt/zsh-patina/bin/zsh-patina activate)"
+eval "$(/opt/homebrew/opt/zsh-patina/bin/zsh-patina activate)"
+eval "$(/opt/homebrew/opt/zsh-patina/bin/zsh-patina activate)"
+eval "$(/opt/homebrew/opt/zsh-patina/bin/zsh-patina activate)"
+eval "$(/opt/homebrew/opt/zsh-patina/bin/zsh-patina activate)"
+eval "$(/opt/homebrew/opt/zsh-patina/bin/zsh-patina activate)"
+eval "$(/opt/homebrew/opt/zsh-patina/bin/zsh-patina activate)"
+eval "$(/opt/homebrew/opt/zsh-patina/bin/zsh-patina activate)"
+eval "$(/opt/homebrew/opt/zsh-patina/bin/zsh-patina activate)"
+eval "$(/opt/homebrew/opt/zsh-patina/bin/zsh-patina activate)"
+eval "$(/opt/homebrew/opt/zsh-patina/bin/zsh-patina activate)"
+eval "$(/opt/homebrew/opt/zsh-patina/bin/zsh-patina activate)"
+eval "$(/opt/homebrew/opt/zsh-patina/bin/zsh-patina activate)"
+eval "$(/opt/homebrew/opt/zsh-patina/bin/zsh-patina activate)"
+eval "$(/opt/homebrew/opt/zsh-patina/bin/zsh-patina activate)"
+eval "$(/opt/homebrew/opt/zsh-patina/bin/zsh-patina activate)"
+eval "$(/opt/homebrew/opt/zsh-patina/bin/zsh-patina activate)"
+eval "$(/opt/homebrew/opt/zsh-patina/bin/zsh-patina activate)"
+eval "$(/opt/homebrew/opt/zsh-patina/bin/zsh-patina activate)"
+eval "$(/opt/homebrew/opt/zsh-patina/bin/zsh-patina activate)"
+eval "$(/opt/homebrew/opt/zsh-patina/bin/zsh-patina activate)"
+eval "$(/opt/homebrew/opt/zsh-patina/bin/zsh-patina activate)"
+eval "$(/opt/homebrew/opt/zsh-patina/bin/zsh-patina activate)"
+eval "$(/opt/homebrew/opt/zsh-patina/bin/zsh-patina activate)"
+eval "$(/opt/homebrew/opt/zsh-patina/bin/zsh-patina activate)"
+eval "$(/opt/homebrew/opt/zsh-patina/bin/zsh-patina activate)"
+eval "$(/opt/homebrew/opt/zsh-patina/bin/zsh-patina activate)"
+eval "$(/opt/homebrew/opt/zsh-patina/bin/zsh-patina activate)"
+eval "$(/opt/homebrew/opt/zsh-patina/bin/zsh-patina activate)"
+eval "$(/opt/homebrew/opt/zsh-patina/bin/zsh-patina activate)"
+eval "$(/opt/homebrew/opt/zsh-patina/bin/zsh-patina activate)"
+eval "$(/opt/homebrew/opt/zsh-patina/bin/zsh-patina activate)"
+eval "$(/opt/homebrew/opt/zsh-patina/bin/zsh-patina activate)"
+eval "$(/opt/homebrew/opt/zsh-patina/bin/zsh-patina activate)"
+eval "$(/opt/homebrew/opt/zsh-patina/bin/zsh-patina activate)"
+eval "$(/opt/homebrew/opt/zsh-patina/bin/zsh-patina activate)"
+eval "$(/opt/homebrew/opt/zsh-patina/bin/zsh-patina activate)"
+eval "$(/opt/homebrew/opt/zsh-patina/bin/zsh-patina activate)"
+eval "$(/opt/homebrew/opt/zsh-patina/bin/zsh-patina activate)"
+eval "$(/opt/homebrew/opt/zsh-patina/bin/zsh-patina activate)"
+eval "$(/opt/homebrew/opt/zsh-patina/bin/zsh-patina activate)"
+eval "$(/opt/homebrew/opt/zsh-patina/bin/zsh-patina activate)"
+eval "$(/opt/homebrew/opt/zsh-patina/bin/zsh-patina activate)"
+eval "$(/opt/homebrew/opt/zsh-patina/bin/zsh-patina activate)"
+eval "$(/opt/homebrew/opt/zsh-patina/bin/zsh-patina activate)"
+eval "$(/opt/homebrew/opt/zsh-patina/bin/zsh-patina activate)"
+eval "$(/opt/homebrew/opt/zsh-patina/bin/zsh-patina activate)"
+eval "$(/opt/homebrew/opt/zsh-patina/bin/zsh-patina activate)"
+eval "$(/opt/homebrew/opt/zsh-patina/bin/zsh-patina activate)"
+eval "$(/opt/homebrew/opt/zsh-patina/bin/zsh-patina activate)"
+eval "$(/opt/homebrew/opt/zsh-patina/bin/zsh-patina activate)"
+
+# Added by LM Studio CLI (lms)
+export PATH="$PATH:/Users/jordanlang/.lmstudio/bin"
+# End of LM Studio CLI section
+
+eval "$(/opt/homebrew/opt/zsh-patina/bin/zsh-patina activate)"
+eval "$(/opt/homebrew/opt/zsh-patina/bin/zsh-patina activate)"
+eval "$(/opt/homebrew/opt/zsh-patina/bin/zsh-patina activate)"
+eval "$(/opt/homebrew/opt/zsh-patina/bin/zsh-patina activate)"
+eval "$(/opt/homebrew/opt/zsh-patina/bin/zsh-patina activate)"
+eval "$(/opt/homebrew/opt/zsh-patina/bin/zsh-patina activate)"
+eval "$(/opt/homebrew/opt/zsh-patina/bin/zsh-patina activate)"
+eval "$(/opt/homebrew/opt/zsh-patina/bin/zsh-patina activate)"
+eval "$(/opt/homebrew/opt/zsh-patina/bin/zsh-patina activate)"
+# The following lines have been added by Docker Desktop to enable Docker CLI completions.
+fpath=(/Users/jordanlang/.docker/completions $fpath)
+autoload -Uz compinit
+compinit -i
+# End of Docker CLI completions
+eval "$(/opt/homebrew/opt/zsh-patina/bin/zsh-patina activate)"
+eval "$(/opt/homebrew/opt/zsh-patina/bin/zsh-patina activate)"
+eval "$(/opt/homebrew/opt/zsh-patina/bin/zsh-patina activate)"
+eval "$(/opt/homebrew/opt/zsh-patina/bin/zsh-patina activate)"
+eval "$(/opt/homebrew/opt/zsh-patina/bin/zsh-patina activate)"
+eval "$(/opt/homebrew/opt/zsh-patina/bin/zsh-patina activate)"
+eval "$(/opt/homebrew/opt/zsh-patina/bin/zsh-patina activate)"
+eval "$(/opt/homebrew/opt/zsh-patina/bin/zsh-patina activate)"
+eval "$(/opt/homebrew/opt/zsh-patina/bin/zsh-patina activate)"
+eval "$(/opt/homebrew/opt/zsh-patina/bin/zsh-patina activate)"
+eval "$(/opt/homebrew/opt/zsh-patina/bin/zsh-patina activate)"
+eval "$(/opt/homebrew/opt/zsh-patina/bin/zsh-patina activate)"
+eval "$(/opt/homebrew/opt/zsh-patina/bin/zsh-patina activate)"
+eval "$(/opt/homebrew/opt/zsh-patina/bin/zsh-patina activate)"
+eval "$(/opt/homebrew/opt/zsh-patina/bin/zsh-patina activate)"
+eval "$(/opt/homebrew/opt/zsh-patina/bin/zsh-patina activate)"
+eval "$(/opt/homebrew/opt/zsh-patina/bin/zsh-patina activate)"
