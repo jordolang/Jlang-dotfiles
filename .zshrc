@@ -410,6 +410,15 @@ function y() {
 export PATH="/Applications/Ollama.app/Contents/MacOS:$PATH"
 
 #Ollama Configuration
+# Server tuning, mirrored from ~/.local/bin/ollama-env.sh (which publishes the
+# same values into launchd so Ollama.app inherits them when it autostarts at
+# login). These exports cover the other path: an `ollama` CLI call starting the
+# server on demand from a terminal. Change both places together.
+export OLLAMA_FLASH_ATTENTION=1     # required for KV quantization to engage
+export OLLAMA_KV_CACHE_TYPE=q8_0    # halves KV cache — 64k ctx fits in 16GB
+export OLLAMA_MAX_LOADED_MODELS=1
+export OLLAMA_NUM_PARALLEL=1        # KV cost is num_ctx * num_parallel
+
 # Ollama aliases
 alias ai="ollama run llama3.2"
 alias ai-code="ollama run codellama"
@@ -447,11 +456,6 @@ export OPENAI_BASE_URL="http://localhost:11434/v1"
 alias open-webui='~/open-webui-venv/bin/open-webui'
 
 #ZSH Completions
-echo 'eval "$(/opt/homebrew/opt/zsh-patina/bin/zsh-patina activate)"' >> ~/.zshrc
-eval "$(/opt/homebrew/opt/zsh-patina/bin/zsh-patina activate)"
-eval "$(/opt/homebrew/opt/zsh-patina/bin/zsh-patina activate)"
-eval "$(/opt/homebrew/opt/zsh-patina/bin/zsh-patina activate)"
-eval "$(/opt/homebrew/opt/zsh-patina/bin/zsh-patina activate)"
 
 # ── Claude Overlay (macOS port) ─────────────────────────────────────────────
 # Launch the floating Claude overlay from anywhere by typing: claude-overlay
@@ -465,93 +469,21 @@ claude-overlay() {
   disown
   echo "Claude Overlay launched → ~/.claude-overlay/overlay.log"
 }
-eval "$(/opt/homebrew/opt/zsh-patina/bin/zsh-patina activate)"
-eval "$(/opt/homebrew/opt/zsh-patina/bin/zsh-patina activate)"
-eval "$(/opt/homebrew/opt/zsh-patina/bin/zsh-patina activate)"
-eval "$(/opt/homebrew/opt/zsh-patina/bin/zsh-patina activate)"
-eval "$(/opt/homebrew/opt/zsh-patina/bin/zsh-patina activate)"
-eval "$(/opt/homebrew/opt/zsh-patina/bin/zsh-patina activate)"
-eval "$(/opt/homebrew/opt/zsh-patina/bin/zsh-patina activate)"
-eval "$(/opt/homebrew/opt/zsh-patina/bin/zsh-patina activate)"
-eval "$(/opt/homebrew/opt/zsh-patina/bin/zsh-patina activate)"
-eval "$(/opt/homebrew/opt/zsh-patina/bin/zsh-patina activate)"
-eval "$(/opt/homebrew/opt/zsh-patina/bin/zsh-patina activate)"
-eval "$(/opt/homebrew/opt/zsh-patina/bin/zsh-patina activate)"
-eval "$(/opt/homebrew/opt/zsh-patina/bin/zsh-patina activate)"
-eval "$(/opt/homebrew/opt/zsh-patina/bin/zsh-patina activate)"
-eval "$(/opt/homebrew/opt/zsh-patina/bin/zsh-patina activate)"
-eval "$(/opt/homebrew/opt/zsh-patina/bin/zsh-patina activate)"
-eval "$(/opt/homebrew/opt/zsh-patina/bin/zsh-patina activate)"
-eval "$(/opt/homebrew/opt/zsh-patina/bin/zsh-patina activate)"
-eval "$(/opt/homebrew/opt/zsh-patina/bin/zsh-patina activate)"
-eval "$(/opt/homebrew/opt/zsh-patina/bin/zsh-patina activate)"
-eval "$(/opt/homebrew/opt/zsh-patina/bin/zsh-patina activate)"
-eval "$(/opt/homebrew/opt/zsh-patina/bin/zsh-patina activate)"
-eval "$(/opt/homebrew/opt/zsh-patina/bin/zsh-patina activate)"
-eval "$(/opt/homebrew/opt/zsh-patina/bin/zsh-patina activate)"
-eval "$(/opt/homebrew/opt/zsh-patina/bin/zsh-patina activate)"
-eval "$(/opt/homebrew/opt/zsh-patina/bin/zsh-patina activate)"
-eval "$(/opt/homebrew/opt/zsh-patina/bin/zsh-patina activate)"
-eval "$(/opt/homebrew/opt/zsh-patina/bin/zsh-patina activate)"
-eval "$(/opt/homebrew/opt/zsh-patina/bin/zsh-patina activate)"
-eval "$(/opt/homebrew/opt/zsh-patina/bin/zsh-patina activate)"
-eval "$(/opt/homebrew/opt/zsh-patina/bin/zsh-patina activate)"
-eval "$(/opt/homebrew/opt/zsh-patina/bin/zsh-patina activate)"
-eval "$(/opt/homebrew/opt/zsh-patina/bin/zsh-patina activate)"
-eval "$(/opt/homebrew/opt/zsh-patina/bin/zsh-patina activate)"
-eval "$(/opt/homebrew/opt/zsh-patina/bin/zsh-patina activate)"
-eval "$(/opt/homebrew/opt/zsh-patina/bin/zsh-patina activate)"
-eval "$(/opt/homebrew/opt/zsh-patina/bin/zsh-patina activate)"
-eval "$(/opt/homebrew/opt/zsh-patina/bin/zsh-patina activate)"
-eval "$(/opt/homebrew/opt/zsh-patina/bin/zsh-patina activate)"
-eval "$(/opt/homebrew/opt/zsh-patina/bin/zsh-patina activate)"
-eval "$(/opt/homebrew/opt/zsh-patina/bin/zsh-patina activate)"
-eval "$(/opt/homebrew/opt/zsh-patina/bin/zsh-patina activate)"
-eval "$(/opt/homebrew/opt/zsh-patina/bin/zsh-patina activate)"
-eval "$(/opt/homebrew/opt/zsh-patina/bin/zsh-patina activate)"
-eval "$(/opt/homebrew/opt/zsh-patina/bin/zsh-patina activate)"
-eval "$(/opt/homebrew/opt/zsh-patina/bin/zsh-patina activate)"
-eval "$(/opt/homebrew/opt/zsh-patina/bin/zsh-patina activate)"
-eval "$(/opt/homebrew/opt/zsh-patina/bin/zsh-patina activate)"
-eval "$(/opt/homebrew/opt/zsh-patina/bin/zsh-patina activate)"
-eval "$(/opt/homebrew/opt/zsh-patina/bin/zsh-patina activate)"
-eval "$(/opt/homebrew/opt/zsh-patina/bin/zsh-patina activate)"
-eval "$(/opt/homebrew/opt/zsh-patina/bin/zsh-patina activate)"
-eval "$(/opt/homebrew/opt/zsh-patina/bin/zsh-patina activate)"
-eval "$(/opt/homebrew/opt/zsh-patina/bin/zsh-patina activate)"
 
 # Added by LM Studio CLI (lms)
 export PATH="$PATH:/Users/jordanlang/.lmstudio/bin"
 # End of LM Studio CLI section
 
-eval "$(/opt/homebrew/opt/zsh-patina/bin/zsh-patina activate)"
-eval "$(/opt/homebrew/opt/zsh-patina/bin/zsh-patina activate)"
-eval "$(/opt/homebrew/opt/zsh-patina/bin/zsh-patina activate)"
-eval "$(/opt/homebrew/opt/zsh-patina/bin/zsh-patina activate)"
-eval "$(/opt/homebrew/opt/zsh-patina/bin/zsh-patina activate)"
-eval "$(/opt/homebrew/opt/zsh-patina/bin/zsh-patina activate)"
-eval "$(/opt/homebrew/opt/zsh-patina/bin/zsh-patina activate)"
-eval "$(/opt/homebrew/opt/zsh-patina/bin/zsh-patina activate)"
-eval "$(/opt/homebrew/opt/zsh-patina/bin/zsh-patina activate)"
 # The following lines have been added by Docker Desktop to enable Docker CLI completions.
 fpath=(/Users/jordanlang/.docker/completions $fpath)
 autoload -Uz compinit
 compinit -i
 # End of Docker CLI completions
+
 eval "$(/opt/homebrew/opt/zsh-patina/bin/zsh-patina activate)"
-eval "$(/opt/homebrew/opt/zsh-patina/bin/zsh-patina activate)"
-eval "$(/opt/homebrew/opt/zsh-patina/bin/zsh-patina activate)"
-eval "$(/opt/homebrew/opt/zsh-patina/bin/zsh-patina activate)"
-eval "$(/opt/homebrew/opt/zsh-patina/bin/zsh-patina activate)"
-eval "$(/opt/homebrew/opt/zsh-patina/bin/zsh-patina activate)"
-eval "$(/opt/homebrew/opt/zsh-patina/bin/zsh-patina activate)"
-eval "$(/opt/homebrew/opt/zsh-patina/bin/zsh-patina activate)"
-eval "$(/opt/homebrew/opt/zsh-patina/bin/zsh-patina activate)"
-eval "$(/opt/homebrew/opt/zsh-patina/bin/zsh-patina activate)"
-eval "$(/opt/homebrew/opt/zsh-patina/bin/zsh-patina activate)"
-eval "$(/opt/homebrew/opt/zsh-patina/bin/zsh-patina activate)"
-eval "$(/opt/homebrew/opt/zsh-patina/bin/zsh-patina activate)"
-eval "$(/opt/homebrew/opt/zsh-patina/bin/zsh-patina activate)"
-eval "$(/opt/homebrew/opt/zsh-patina/bin/zsh-patina activate)"
-eval "$(/opt/homebrew/opt/zsh-patina/bin/zsh-patina activate)"
-eval "$(/opt/homebrew/opt/zsh-patina/bin/zsh-patina activate)"
+# `zsh-patina activate` emits a script with NO trailing newline. If that eval ever
+# ends up glued to another line (e.g. an installer appending to a file that lacks a
+# final newline), zsh concatenates the two words and patina's last line becomes
+# `add-zsh-hook chpwd _zsh_patina_chpwdeval` -- a hook function that does not exist,
+# so every cd/z prints "function definition file not found". Strip any such stray.
+add-zsh-hook -D chpwd '_zsh_patina_chpwd?*'
